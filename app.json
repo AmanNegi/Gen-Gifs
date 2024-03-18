@@ -1,0 +1,16 @@
+{
+    "id": "849b5016-64b9-4e03-880e-f9d3808eea13",
+    "version": "0.0.1",
+    "requiredApiVersion": "^1.19.0",
+    "iconFile": "icon.png",
+    "author": {
+        "name": "Aster",
+        "homepage": "none",
+        "support": "none"
+    },
+    "name": "gen-gif",
+    "nameSlug": "gen-gif",
+    "classFile": "OneGifApp.ts",
+    "description": "Generate a Gif on the go!",
+    "implements": []
+}
