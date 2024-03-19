@@ -7,11 +7,10 @@ import {
 } from "@rocket.chat/apps-engine/definition/accessors";
 import {
     ISlashCommand,
-    ISlashCommandPreview,
-    ISlashCommandPreviewItem,
     SlashCommandContext,
 } from "@rocket.chat/apps-engine/definition/slashcommands";
 import { OneGifApp } from "../OneGifApp";
+import { genGifModal } from "../modals/gen-gifs";
 
 export class OneGifCommand implements ISlashCommand {
     command = "gen-gif";
@@ -46,6 +45,19 @@ export class OneGifCommand implements ISlashCommand {
         if (tid) {
             builder.setThreadId(tid);
         }
+        if (query.trim() === "list") {
+            const triggerId = context.getTriggerId() ?? "";
+
+            modify
+                .getUiController()
+                .openSurfaceView(
+                    genGifModal(this.app),
+                    { triggerId },
+                    context.getSender()
+                );
+
+            return;
+        }
 
         if (!apiKey || apiKey === "") {
             builder.setText(
@@ -67,7 +79,6 @@ export class OneGifCommand implements ISlashCommand {
             if (res && res.statusCode !== HttpStatusCode.OK) {
                 throw new Error("Unable to retrieve gifs.");
             }
-
             builder.addAttachment({
                 title: {
                     value: query.substring(0, 60).trim(),
@@ -75,7 +86,26 @@ export class OneGifCommand implements ISlashCommand {
                 imageUrl: res.content,
             });
 
+            const oldData = await read.getPersistenceReader().read("gen-gif");
+            if (!oldData) {
+                await persis.create({
+                    generated_gifs: [{ query: query, url: res.content }],
+                });
+            } else {
+                const oldData = (await read
+                    .getPersistenceReader()
+                    .read("gen-gif")) as {
+                    generated_gifs: Array<{ query: string; url: string }>;
+                };
+                await persis.update("gen-gif", {
+                    generated_gifs: [
+                        { query: query, url: res.content },
+                        ...oldData.generated_gifs,
+                    ].slice(0, Math.min(9, oldData.generated_gifs.length)),
+                });
+            }
             await modify.getCreator().finish(builder);
+            return;
         } catch (e) {
             this.app.getLogger().log("Error occurred: ", e);
             builder.setText(
@@ -85,6 +115,7 @@ export class OneGifCommand implements ISlashCommand {
             modify
                 .getNotifier()
                 .notifyUser(context.getSender(), builder.getMessage());
+            return;
         }
     }
 }
