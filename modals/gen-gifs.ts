@@ -1,4 +1,7 @@
-import { IUIKitSurfaceViewParam } from "@rocket.chat/apps-engine/definition/accessors";
+import {
+    IRead,
+    IUIKitSurfaceViewParam,
+} from "@rocket.chat/apps-engine/definition/accessors";
 import { OneGifApp } from "../OneGifApp";
 import {
     BlockType,
@@ -9,11 +12,36 @@ import { TextObjectType } from "@rocket.chat/ui-kit/dist/esm/blocks/TextObjectTy
 import {
     Block,
     BlockElementType,
+    ImageBlock,
     InputBlock,
     PlainTextInputElement,
 } from "@rocket.chat/ui-kit";
+import {
+    RocketChatAssociationModel,
+    RocketChatAssociationRecord,
+} from "@rocket.chat/apps-engine/definition/metadata";
+import { GifPersistentData } from "../src/endpoints/GifEndpoint";
 
-export function genGifModal(app: OneGifApp): IUIKitSurfaceViewParam {
+export async function genGifModal(
+    app: OneGifApp,
+    read: IRead
+): Promise<IUIKitSurfaceViewParam> {
+    let data = await read
+        .getPersistenceReader()
+        .readByAssociation(
+            new RocketChatAssociationRecord(
+                RocketChatAssociationModel.MISC,
+                "gen-gif"
+            )
+        );
+    app.getLogger().log("gen-gifs modal", data);
+    let gifs: GifPersistentData = { generated_gifs: [] };
+
+    if (!data || data.length > 0) {
+        const generatedGifs: GifPersistentData = data[0] as GifPersistentData;
+        gifs = generatedGifs;
+    }
+
     return {
         id: app.getID(),
         type: UIKitSurfaceType.CONTEXTUAL_BAR,
@@ -23,38 +51,43 @@ export function genGifModal(app: OneGifApp): IUIKitSurfaceViewParam {
         },
 
         blocks: [
-            {
-                type: BlockType.IMAGE,
-                title: {
-                    type: TextObjectType.PLAIN_TEXT,
-                    text: "Generate a Gif on the go!",
-                },
-                imageUrl:
-                    "https://media.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif",
-                altText: "Generate a Gif on the go!",
-            },
-            getText("Enter a keyword to generate a GIF!"),
-            getField("Enter a keyword"),
-            {
-                type: BlockType.ACTIONS,
-                blockId: "gif-actions",
-                elements: [
-                    {
-                        type: "button",
-                        appId: app.getID(),
-                        blockId: "gif-gen-gif", // Add the missing blockId property
-                        text: {
-                            type: TextObjectType.PLAIN_TEXT,
-                            text: "Generate GIF",
-                        },
-                        actionId: "gen-gif",
-                        value: "Generate GIF",
-                        style: ButtonStyle.PRIMARY,
-                    },
-                ],
-            },
+            getText("Your Creations :paintbrush: "),
+            ...gifs.generated_gifs.map((gif) => getImage(gif.url, gif.query)),
+
+            // getField("Enter a keyword"),
+            // {
+            //     type: BlockType.ACTIONS,
+            //     blockId: "gif-actions",
+            //     elements: [
+            //         {
+            //             type: "button",
+            //             appId: app.getID(),
+            //             blockId: "gif-gen-gif", // Add the missing blockId property
+            //             text: {
+            //                 type: TextObjectType.PLAIN_TEXT,
+            //                 text: "Generate GIF",
+            //             },
+            //             actionId: "gen-gif",
+            //             value: "Generate GIF",
+            //             style: ButtonStyle.PRIMARY,
+            //         },
+            //     ],
+            // },
         ],
     };
+
+    function getImage(url: string, query: string): ImageBlock {
+        return {
+            type: BlockType.IMAGE,
+            title: {
+                type: TextObjectType.PLAIN_TEXT,
+                text: query,
+            },
+            appId: app.getID(),
+            imageUrl: url,
+            altText: query,
+        };
+    }
 
     function getField(text: string): InputBlock {
         const inputBlock: InputBlock = {
@@ -84,12 +117,16 @@ export function genGifModal(app: OneGifApp): IUIKitSurfaceViewParam {
     function getText(text: string): Block {
         const textBlock: Block = {
             type: BlockType.SECTION,
-            fields: [
-                {
-                    type: TextObjectType.PLAIN_TEXT,
-                    text: text,
-                },
-            ],
+            text: {
+                text: text,
+                type: TextObjectType.PLAIN_TEXT,
+            },
+            // fields: [
+            //     {
+            //         type: TextObjectType.PLAIN_TEXT,
+            //         text: text,
+            //     },
+            // ],
         };
 
         return textBlock;
