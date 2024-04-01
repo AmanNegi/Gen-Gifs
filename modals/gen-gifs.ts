@@ -5,23 +5,20 @@ import {
 import { OneGifApp } from "../OneGifApp";
 import {
     BlockType,
-    ButtonStyle,
     UIKitSurfaceType,
 } from "@rocket.chat/apps-engine/definition/uikit";
 import { TextObjectType } from "@rocket.chat/ui-kit/dist/esm/blocks/TextObjectType";
-import {
-    Block,
-    BlockElementType,
-    ImageBlock,
-    InputBlock,
-    PlainTextInputElement,
-} from "@rocket.chat/ui-kit";
+import { Block, ImageBlock } from "@rocket.chat/ui-kit";
 import {
     RocketChatAssociationModel,
     RocketChatAssociationRecord,
 } from "@rocket.chat/apps-engine/definition/metadata";
 import { GifPersistentData } from "../src/endpoints/GifEndpoint";
 
+/**
+ * This is the Modal to display the previous generations
+ * -> Uses Local Persistence to store the generated GIFs
+ */
 export async function genGifModal(
     app: OneGifApp,
     read: IRead
@@ -53,26 +50,6 @@ export async function genGifModal(
         blocks: [
             getText("Your Creations :paintbrush: "),
             ...gifs.generated_gifs.map((gif) => getImage(gif.url, gif.query)),
-
-            // getField("Enter a keyword"),
-            // {
-            //     type: BlockType.ACTIONS,
-            //     blockId: "gif-actions",
-            //     elements: [
-            //         {
-            //             type: "button",
-            //             appId: app.getID(),
-            //             blockId: "gif-gen-gif", // Add the missing blockId property
-            //             text: {
-            //                 type: TextObjectType.PLAIN_TEXT,
-            //                 text: "Generate GIF",
-            //             },
-            //             actionId: "gen-gif",
-            //             value: "Generate GIF",
-            //             style: ButtonStyle.PRIMARY,
-            //         },
-            //     ],
-            // },
         ],
     };
 
@@ -88,32 +65,6 @@ export async function genGifModal(
             altText: query,
         };
     }
-
-    function getField(text: string): InputBlock {
-        const inputBlock: InputBlock = {
-            type: BlockType.INPUT,
-            blockId: "gif-keyword",
-            element: {
-                // type: BlockElementType.PLAIN_TEXT_INPUT,
-                //TODO: Check why doesn't this work
-                type: "plain_text_input",
-                actionId: "gif-keyword",
-                appId: app.getID(),
-                blockId: "gif-keyword",
-                placeholder: {
-                    type: TextObjectType.PLAIN_TEXT,
-                    text: "Enter a keyword",
-                },
-            },
-            label: {
-                type: TextObjectType.PLAIN_TEXT,
-                text: text,
-            },
-        };
-
-        return inputBlock;
-    }
-
     function getText(text: string): Block {
         const textBlock: Block = {
             type: BlockType.SECTION,
@@ -121,12 +72,6 @@ export async function genGifModal(
                 text: text,
                 type: TextObjectType.PLAIN_TEXT,
             },
-            // fields: [
-            //     {
-            //         type: TextObjectType.PLAIN_TEXT,
-            //         text: text,
-            //     },
-            // ],
         };
 
         return textBlock;

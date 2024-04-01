@@ -15,6 +15,7 @@ import {
     RocketChatAssociationModel,
     RocketChatAssociationRecord,
 } from "@rocket.chat/apps-engine/definition/metadata";
+import sendGifToRoom from "../helpers/GifSender";
 
 export type GifPersistentData = {
     generated_gifs: Array<{ query: string; url: string }>;
@@ -24,7 +25,6 @@ export class GifEndpoint extends ApiEndpoint {
     path: string = `${this.app.getID()}/gif-res`;
 
     GifEndpoint(app: OneGifApp) {
-        console.log("GifEndpoint.constructor");
         console.log(this.path);
         app.getLogger().log("GifEndpoint.constructor", this.path);
     }
@@ -52,7 +52,6 @@ export class GifEndpoint extends ApiEndpoint {
         } = request.content;
 
         if (!query || !gifUrl || !roomId || !uid) {
-            
             return {
                 status: 400,
                 content: {
@@ -76,8 +75,6 @@ export class GifEndpoint extends ApiEndpoint {
             };
         }
 
-        //TODO:  update old message
-
         const mes = await read.getMessageReader().getById(awaitMessageId);
 
         if (!mes) {
@@ -89,8 +86,9 @@ export class GifEndpoint extends ApiEndpoint {
             };
         }
 
+        // TODO: Instead of deleting old message modify it to add gif
         await modify.getDeleter().deleteMessage(mes, sender);
-
+        
         const message = modify.getCreator().startMessage({
             room,
             sender,
@@ -104,32 +102,9 @@ export class GifEndpoint extends ApiEndpoint {
                 },
             ],
         });
-        // message.setText(`Prompt: ${query}`);
-
-        // message.setAttachments([
-        //     {
-        //         title: {
-        //             value: query,
-        //         },
-        //         imageUrl: gifUrl,
-        //     },
-        // ]);
-
-        // const message = modify.getCreator().startMessage({
-        //     room,
-        //     sender,
-        //     attachments: [
-        //         {
-        //             title: q,
-        //             imageUrl: gifUrl,
-        //         },
-        //     ],
-        // });
-
         await modify.getCreator().finish(message);
 
-        // Save generations to local device
-        // const oldData = await read.getPersistenceReader().read("gen-gif");
+        // Save generations to persistence
         const oldData = await read
             .getPersistenceReader()
             .readByAssociation(
@@ -142,9 +117,6 @@ export class GifEndpoint extends ApiEndpoint {
         this.app.getLogger().log("1. GifEndpoint.post", oldData);
 
         if (!oldData || oldData.length <= 0) {
-            // await persis.create({
-            //     generated_gifs: [{ query: query, url: gifUrl }],
-            // });
             await persis.createWithAssociation(
                 {
                     generated_gifs: [
@@ -175,28 +147,17 @@ export class GifEndpoint extends ApiEndpoint {
                 }
             );
             this.app.getLogger().log("3. GifEndpoint.post");
-            // const oldData = (await read
-            //     .getPersistenceReader()
-            //     .read("gen-gif")) as {
-            //     generated_gifs: Array<{ query: string; url: string }>;
-            // };
-            // await persis.update("gen-gif", {
-            //     generated_gifs: [
-            //         { query: query, url: gifUrl },
-            //         ...oldData.generated_gifs,
-            //     ],
-            // });
         }
 
-        // sendGifToRoom(
-        //     request.content.context,
-        //     read,
-        //     modify,
-        //     http,
-        //     persis,
-        //     request.content.title,
-        //     request.content.gifUrl
-        // );
+        sendGifToRoom(
+            request.content.context,
+            read,
+            modify,
+            http,
+            persis,
+            request.content.title,
+            request.content.gifUrl
+        );
 
         return {
             status: 200,

@@ -1,13 +1,14 @@
 import {
-    HttpStatusCode,
     IHttp,
     IModify,
     IPersistence,
     IRead,
 } from "@rocket.chat/apps-engine/definition/accessors";
 import { SlashCommandContext } from "@rocket.chat/apps-engine/definition/slashcommands";
-import { genGifModal } from "../../modals/gen-gifs";
 
+/**
+ * Helper function to send the GIF to the room
+ */
 export default async function sendGifToRoom(
     context: SlashCommandContext,
     read: IRead,
@@ -53,6 +54,4 @@ export default async function sendGifToRoom(
         });
     }
     await modify.getCreator().finish(builder);
-
-    return;
 }

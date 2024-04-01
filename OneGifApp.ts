@@ -2,21 +2,12 @@ import {
     IAppAccessors,
     IConfigurationExtend,
     IEnvironmentRead,
-    IHttp,
     ILogger,
-    IModify,
-    IPersistence,
-    IRead,
 } from "@rocket.chat/apps-engine/definition/accessors";
 import { App } from "@rocket.chat/apps-engine/definition/App";
 import { IAppInfo } from "@rocket.chat/apps-engine/definition/metadata";
 import { OneGifCommand } from "./commands/GenGifCommand";
 import { SettingType } from "@rocket.chat/apps-engine/definition/settings";
-import {
-    IUIKitResponse,
-    UIKitBlockInteractionContext,
-} from "@rocket.chat/apps-engine/definition/uikit";
-import { BlockActionHandler } from "./src/handlers/BlockActionHandler";
 import { GifEndpoint } from "./src/endpoints/GifEndpoint";
 import {
     ApiSecurity,
@@ -32,6 +23,8 @@ export class OneGifApp extends App {
         configurationExtend: IConfigurationExtend,
         environmentRead: IEnvironmentRead
     ): Promise<void> {
+        // Get the API Key from the user
+        // TODO: Instead of API Key take API_URL of `gif_service`
         await configurationExtend.settings.provideSetting({
             id: "gif_api_key",
             type: SettingType.STRING,
@@ -42,27 +35,17 @@ export class OneGifApp extends App {
             i18nDescription:
                 "Generate API Key and provide here to generate GIF's on the go!",
         });
+
+        // Initialize the Slash Commands
         configurationExtend.slashCommands.provideSlashCommand(
             new OneGifCommand(this)
         );
 
+        // Register the Webhooks
         await configurationExtend.api.provideApi({
             visibility: ApiVisibility.PUBLIC,
             security: ApiSecurity.UNSECURE,
             endpoints: [new GifEndpoint(this)],
         });
-    }
-
-    public async executeBlockActionHandler(
-        context: UIKitBlockInteractionContext,
-        read: IRead,
-        http: IHttp,
-        persistence: IPersistence,
-        modify: IModify
-    ): Promise<IUIKitResponse> {
-        this.getLogger().log("Executing BlockActionHandler...");
-        const handler = new BlockActionHandler(this, context, this.getLogger());
-
-        return await handler.handle();
     }
 }
