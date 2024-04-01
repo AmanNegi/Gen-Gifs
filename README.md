@@ -1,8 +1,9 @@
-## Gen-GIF
-> An RC App that allows generating GIF on the go 🚀
+## Gen-GIF 
+> An RC App that allows generating GIFs on the go ✨🚀
  
-A simple POC, that displays how an AI GIF generation would look like in an RC App.
+A simple POC displays what an AI GIF generation would look like in an RC App.
 
 ### Demo
-[demo_video](./doc-assets/RC-app-demo.m4v)
+
+https://github.com/AmanNegi/gen-gif/assets/37607224/52ebba66-46d0-4a41-aca8-2191b8bc4341
 
