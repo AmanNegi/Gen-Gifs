@@ -7,3 +7,10 @@ A simple POC displays what an AI GIF generation would look like in an RC App.
 
 https://github.com/AmanNegi/gen-gif/assets/37607224/52ebba66-46d0-4a41-aca8-2191b8bc4341
 
+### References
+
+- Hotshot-XL: https://github.com/hotshotco/Hotshot-XL
+- Rocket.Chat Docs: https://developer.rocket.chat
+
+
+
